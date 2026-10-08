@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cleaned Data Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/motion@12/dist/motion.js"></script>
+<script>
+  if (window.Motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+</script>
+<style>
+:root{
+  --bg:#FAFAF7;--surface:#FFFFFF;--surface-2:#F3F2EE;--border:#E7E5E0;--border-strong:#D6D3CD;
+  --text:#1C1917;--muted:#57534E;--primary:#0F766E;--primary-2:#14B8A6;--primary-soft:#CCFBF1;
+  --series-b:#A8A29E;--accent:#F97316;--accent-soft:#FFEDD5;--accent-text:#9A3412;
+  --ok:#15803D;--ok-soft:#DCFCE7;--drop:#BE123C;--drop-soft:#FFE4E6;--check:#6D28D9;--check-soft:#EDE9FE;
+  --on-primary:#FFFFFF;
+  --shadow:0 1px 2px rgba(28,25,23,.05),0 2px 6px rgba(28,25,23,.05);
+  --shadow-lift:0 6px 20px rgba(15,118,110,.14),0 2px 6px rgba(28,25,23,.06);
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --display:'Space Grotesk','IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1214;--surface:#111A1D;--surface-2:#182326;--border:#223238;--border-strong:#2F444B;
+  --text:#ECEAE6;--muted:#A8A29E;--primary:#2DD4BF;--primary-2:#14B8A6;--primary-soft:#0D2E2B;
+  --series-b:#5F6B6E;--accent:#FB923C;--accent-soft:#38190A;--accent-text:#FDBA74;
+  --ok:#4ADE80;--ok-soft:#0B2E1A;--drop:#FB7185;--drop-soft:#3A0E18;--check:#C4B5FD;--check-soft:#2A1D4D;
+  --on-primary:#062421;
+  --shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lift:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(45,212,191,.15);color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0B1214;--surface:#111A1D;--surface-2:#182326;--border:#223238;--border-strong:#2F444B;
+  --text:#ECEAE6;--muted:#A8A29E;--primary:#2DD4BF;--primary-2:#14B8A6;--primary-soft:#0D2E2B;
+  --series-b:#5F6B6E;--accent:#FB923C;--accent-soft:#38190A;--accent-text:#FDBA74;
+  --ok:#4ADE80;--ok-soft:#0B2E1A;--drop:#FB7185;--drop-soft:#3A0E18;--check:#C4B5FD;--check-soft:#2A1D4D;
+  --on-primary:#062421;
+  --shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lift:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(45,212,191,.15);color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--sans)}
+h1,h2,h3,.brand b{font-family:var(--display)}
+/* motion: initial states only when Motion loaded and motion allowed */
+.motion [data-reveal]{opacity:0}
+.motion .fill,.motion .keep i{transform:scaleX(0)}
+.motion .cols .c i{transform:scaleY(0)}
+#progress{display:none}
+.motion #progress{display:block}
+#progress{position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent));transform-origin:left;transform:scaleX(0);z-index:40}
+a{color:var(--primary)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+@media (min-width:768px){.wrap{padding:0 24px}}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--primary-2);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* header */
+header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:12px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary-2));color:var(--on-primary);display:grid;place-items:center;flex:none}
+.brand b{display:block;font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spacer{flex:1}
+.btn:active{transform:scale(.97)}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:9px;font:500 14px var(--sans);cursor:pointer;text-decoration:none;transition:background-color .2s,border-color .2s,color .2s,transform .12s}
+.btn:hover{background:var(--surface-2);border-color:var(--primary-2)}
+.btn.icon{width:42px;padding:0;justify-content:center}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn.primary:hover{background:var(--primary-2);border-color:var(--primary-2)}
+
+/* hero */
+.hero{padding:32px 0 8px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:500 12.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--primary)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+h1{font-size:clamp(28px,4.6vw,46px);line-height:1.08;margin:10px 0 12px;letter-spacing:-.025em;font-weight:700;max-width:22ch}
+h1 em{font-style:normal;color:var(--primary)}
+.lede{color:var(--muted);max-width:70ch;margin:0}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:12px;margin:24px 0 8px}
+.total{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.total span{display:block;color:var(--muted);font-size:13px}
+.total b{display:block;font:600 26px/1.2 var(--mono);margin-top:4px;font-variant-numeric:tabular-nums}
+.total.drop b{color:var(--drop)} .total.flag b{color:var(--accent-text)} .total.ok b{color:var(--ok)}
+
+/* section titles */
+section{padding:24px 0}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.015em;font-weight:600}
+.sec-sub{color:var(--muted);margin:0 0 16px;font-size:14.5px}
+
+/* dataset cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.dcard,.total,.kpi,.card,.gallery figure{transition:box-shadow .25s,border-color .25s,background-color .25s}
+.dcard:hover,.card:hover,.gallery figure:hover{box-shadow:var(--shadow-lift)}
+.dcard{text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;color:inherit;font:inherit;box-shadow:var(--shadow)}
+.dcard:hover{border-color:var(--primary-2)}
+.dcard[aria-current="true"]{border-color:var(--primary);background:color-mix(in srgb,var(--primary-soft) 45%,var(--surface))}
+.dcard h3{margin:0 0 2px;font-size:16px;display:flex;align-items:center;gap:8px}
+.dcard .file{font:12.5px var(--mono);color:var(--muted);word-break:break-all}
+.flow{display:flex;align-items:baseline;gap:8px;margin:12px 0 8px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.flow .from{color:var(--muted);font-size:15px}
+.flow .to{font-size:22px;font-weight:600}
+.keep{height:8px;border-radius:99px;background:var(--drop-soft);overflow:hidden;display:flex}
+.keep i{display:block;height:100%;background:var(--ok);transform-origin:left}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted);border:1px solid var(--border)}
+.chip.drop{background:var(--drop-soft);color:var(--drop);border-color:transparent}
+.chip.flag{background:var(--accent-soft);color:var(--accent-text);border-color:transparent}
+.chip.new{background:var(--primary-soft);color:var(--primary);border-color:transparent}
+
+/* tabs */
+.tabs{position:relative;display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--border);margin-bottom:20px;scrollbar-width:thin}
+.tab{flex:none;min-height:44px;padding:0 16px;border:0;background:none;color:var(--muted);font:500 15px var(--display);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s}
+.tab:hover{color:var(--text)}
+.tab[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary)}
+.motion .tab[aria-selected="true"]{border-bottom-color:transparent}
+#ind{position:absolute;left:0;bottom:0;height:2px;width:1px;background:var(--primary);transform-origin:left;display:none}
+.motion #ind{display:block}
+
+.panel-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.panel-head p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:10px;padding:12px 14px}
+.kpi.drop{border-left-color:var(--drop)} .kpi.flag{border-left-color:var(--accent)}
+.kpi span{display:block;font-size:13px;color:var(--muted)}
+.kpi b{display:block;font:600 22px/1.3 var(--mono);font-variant-numeric:tabular-nums}
+.kpi small{color:var(--muted);font-size:12.5px}
+
+.grid2{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:1024px){.grid2{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow);min-width:0}
+.card h3{margin:0;font-size:15.5px}
+.card .sub{margin:2px 0 14px;color:var(--muted);font-size:13px}
+
+/* steps */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.badge{width:30px;height:30px;border-radius:8px;display:grid;place-items:center}
+.badge.transform{background:var(--primary-soft);color:var(--primary)}
+.badge.drop{background:var(--drop-soft);color:var(--drop)}
+.badge.flag{background:var(--accent-soft);color:var(--accent-text)}
+.badge.check{background:var(--check-soft);color:var(--check)}
+.steps b{font:600 13.5px var(--mono)}
+.steps p{margin:1px 0 0;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* charts */
+.charts{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));margin-top:16px}
+.bars{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.bars li{display:grid;grid-template-columns:minmax(80px,38%) 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.bars .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:capitalize}
+.track{height:14px;background:var(--surface-2);border-radius:4px;position:relative;overflow:hidden}
+.fill{position:absolute;top:0;bottom:0;left:0;border-radius:4px;background:linear-gradient(90deg,var(--primary),var(--primary-2));transform-origin:left}
+.fill.accent{background:var(--accent)} .fill.muted{background:var(--series-b)}
+.val{font:500 12.5px var(--mono);font-variant-numeric:tabular-nums;color:var(--text);min-width:52px;text-align:right}
+.cols{display:flex;align-items:flex-end;gap:6px;height:190px;padding-top:18px;border-bottom:1px solid var(--border-strong)}
+.cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.cols .c i{display:block;width:100%;max-width:46px;background:linear-gradient(180deg,var(--primary-2),var(--primary));border-radius:5px 5px 0 0;transform-origin:bottom}
+.cols .c em{font:500 11.5px var(--mono);font-style:normal;margin-bottom:3px;white-space:nowrap}
+.xl{display:flex;gap:6px;margin-top:6px}
+.xl span{flex:1;text-align:center;font:11.5px var(--mono);color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.group{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.group li{display:grid;grid-template-columns:minmax(80px,34%) 1fr;gap:10px;align-items:center;font-size:13.5px}
+.group .pair{display:grid;gap:3px}
+.group .row{display:grid;grid-template-columns:1fr 46px;gap:8px;align-items:center}
+.group .track{height:11px}
+.split{display:flex;height:34px;border-radius:8px;overflow:hidden;margin:6px 0 12px}
+.split div{display:grid;place-items:center;color:#fff;font:600 13px var(--mono);min-width:0}
+.split .primary{background:var(--primary);color:var(--on-primary)} .split .muted{background:var(--series-b);color:#1C1917}
+.range .fill{background:var(--primary-2)}
+
+
+/* examples */
+.examples{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));margin-top:16px}
+.scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{background:var(--surface-2);font:600 12.5px var(--mono);color:var(--muted);position:sticky;top:0;z-index:1}
+td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+td.na{color:var(--muted);font-style:italic}
+td.long{max-width:280px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover td{background:color-mix(in srgb,var(--primary-soft) 40%,transparent)}
+tr.flagged td:first-child{box-shadow:inset 3px 0 var(--accent)}
+.ex th{position:static}
+
+/* explorer */
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.search{flex:1 1 240px;position:relative}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search input{width:100%;min-height:42px;padding:0 12px 0 38px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);color:var(--text);font:15px var(--sans)}
+.search input:focus{outline:2px solid var(--primary-2);outline-offset:0;border-color:transparent}
+.toggle{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;border:1px solid var(--border-strong);border-radius:9px;cursor:pointer;font-size:14px;background:var(--surface)}
+.toggle input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.count{color:var(--muted);font-size:13.5px;font-family:var(--mono)}
+.tablebox{max-height:560px;overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+th button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+th button:focus-visible{outline:2px solid var(--primary-2);border-radius:4px}
+th .new{font:600 10px var(--sans);text-transform:uppercase;letter-spacing:.04em;color:var(--primary);background:var(--primary-soft);padding:1px 5px;border-radius:4px}
+th .arrow{opacity:.35} th[aria-sort] .arrow{opacity:1;color:var(--primary)}
+.pager{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;margin-top:12px}
+.pager .btns{display:flex;gap:6px}
+.pager .btn[disabled]{opacity:.45;cursor:not-allowed}
+.empty{padding:32px;text-align:center;color:var(--muted)}
+
+/* gallery */
+.gallery{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))}
+.gallery figure{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.gallery img{display:block;width:100%;height:auto}
+.gallery figcaption{padding:10px 14px;font:13px var(--mono);color:#57534E;border-top:1px solid #E7E5E0;background:#fff;text-transform:capitalize}
+footer{border-top:1px solid var(--border);margin-top:24px;padding:20px 0 32px;color:var(--muted);font-size:13.5px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:640px){.hide-sm{display:none}.bars li{grid-template-columns:minmax(70px,40%) 1fr auto}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="m15 4 5 5L9 20H4v-5z"/><path d="m13 6 5 5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<div id="progress" aria-hidden="true"></div>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg class="i"><use href="#i-db"/></svg></div>
+      <div><b>Cleaned Data Explorer</b><small>Team Grayhat · SAS × CU Hackathon</small></div>
+    </div>
+    <div class="spacer"></div>
+    <a class="btn hide-sm" href="cleaning_log.md">Cleaning log</a>
+    <button class="btn icon" id="theme" type="button" aria-label="Toggle dark mode"><svg class="i"><use href="#i-moon"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="eyebrow" data-reveal>Data cleaning output</div>
+    <h1 data-reveal>Four raw datasets, <em>cleaned</em> and ready for analysis</h1>
+    <p class="lede" data-reveal>Every step from <code>clean_data.py</code>: what was dropped, what was transformed, and what was only flagged. Browse the cleaned rows, check the distributions, and download the CSVs.</p>
+    <div class="totals" id="totals"></div>
+  </div>
+
+  <section aria-labelledby="ds-h">
+    <h2 id="ds-h">Datasets</h2>
+    <p class="sec-sub">Rows before and after cleaning. Green = kept, red = removed.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section aria-labelledby="detail-h">
+    <h2 id="detail-h" class="sr">Dataset detail</h2>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="panel" role="tabpanel"></div>
+  </section>
+
+  <section aria-labelledby="gal-h" id="gallery-sec">
+    <h2 id="gal-h">EDA charts</h2>
+    <p class="sec-sub">Static charts produced by <code>eda_jobs_market.py</code> from the cleaned files.</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = id => `<svg class="i" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const FMT = {
+  int: v => Math.round(v).toLocaleString(),
+  lpa: v => v.toFixed(1) + ' LPA',
+  pct: v => v.toFixed(1) + '%',
+  num: v => v.toFixed(2),
+  num1: v => v.toFixed(1),
+};
+const STEP_ICON = {transform: 'wand', drop: 'trash', flag: 'flag', check: 'check'};
+
+/* motion helpers: no-ops when Motion missing or reduced motion requested */
+const M = document.documentElement.classList.contains('motion') ? window.Motion : null;
+const EASE = [0.22, 1, 0.36, 1];
+function reveal(els, delay = 0) {
+  if (!M || !els || !els.length) return;
+  M.animate(els, {opacity: [0, 1], transform: ['translateY(14px)', 'translateY(0)']},
+    {duration: 0.55, ease: EASE, delay: M.stagger(0.05, {startDelay: delay})});
+}
+function countUp(el, delay = 0) {
+  if (!M) return;
+  const m = el.textContent.match(/^([\d,]+(?:\.\d+)?)(.*)$/s);
+  if (!m) return;
+  const target = parseFloat(m[1].replace(/,/g, '')), dec = (m[1].split('.')[1] || '').length, rest = m[2];
+  el.textContent = (dec ? (0).toFixed(dec) : '0') + rest;
+  M.animate(0, target, {duration: 1.1, delay, ease: EASE,
+    onUpdate: v => { el.textContent = (dec ? v.toFixed(dec) : Math.round(v).toLocaleString()) + rest; }});
+}
+function grow(root, delay = 0.1) {
+  if (!M) return;
+  const fills = root.querySelectorAll('.fill, .keep i'), cols = root.querySelectorAll('.cols .c i');
+  if (fills.length) M.animate(fills, {transform: ['scaleX(0)', 'scaleX(1)']}, {duration: 0.8, ease: EASE, delay: M.stagger(0.035, {startDelay: delay})});
+  if (cols.length) M.animate(cols, {transform: ['scaleY(0)', 'scaleY(1)']}, {duration: 0.8, ease: EASE, delay: M.stagger(0.06, {startDelay: delay})});
+}
+let panelStops = [];
+function onView(el, fn, amount = 0.2) {
+  if (!M) return fn();
+  panelStops.push(M.inView(el, () => { fn(); }, {amount}));
+}
+function moveInd(i, instant) {
+  const ind = $('#ind'), t = $('#tab-' + i);
+  if (!M || !ind || !t) return;
+  const tf = `translateX(${t.offsetLeft}px) scaleX(${t.offsetWidth})`;
+  if (instant) ind.style.transform = tf;
+  else M.animate(ind, {transform: tf}, {type: 'spring', bounce: 0, visualDuration: 0.35});
+}
+
+/* theme */
+(function () {
+  const root = document.documentElement, btn = $('#theme');
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (e) {}
+  if (saved) root.dataset.theme = saved;
+  const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const paint = () => { btn.innerHTML = icon(isDark() ? 'sun' : 'moon'); btn.setAttribute('aria-label', isDark() ? 'Switch to light mode' : 'Switch to dark mode'); };
+  btn.onclick = () => {
+    root.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {} paint();
+    if (window.Motion && root.classList.contains('motion')) Motion.animate(btn.firstElementChild, {opacity: [0, 1], transform: ['rotate(-90deg) scale(.6)', 'rotate(0deg) scale(1)']}, {duration: 0.35, ease: [0.22, 1, 0.36, 1]});
+  };
+  paint();
+})();
+
+/* totals */
+const D = DATA.datasets;
+const sum = f => D.reduce((a, d) => a + f(d), 0);
+const flagged = d => d.table.rows.filter(r => r[d.table.flag]).length;
+$('#totals').innerHTML = [
+  ['Raw rows', sum(d => d.raw), ''],
+  ['Clean rows', sum(d => d.clean), 'ok'],
+  ['Rows removed', sum(d => d.raw - d.clean), 'drop'],
+  ['Rows flagged, kept', sum(flagged), 'flag'],
+  ['Columns added', sum(d => d.cols_clean - d.cols_raw), ''],
+].map(([l, v, t]) => `<div class="total ${t}" data-reveal><span>${l}</span><b>${v.toLocaleString()}</b></div>`).join('');
+
+/* cards + tabs */
+let current = 0;
+$('#cards').innerHTML = D.map((d, i) => {
+  const kept = d.clean / d.raw * 100, removed = d.raw - d.clean, f = flagged(d);
+  return `<button class="dcard" data-i="${i}" type="button" data-reveal aria-label="Open ${esc(d.name)}">
+    <h3>${icon('db')}${esc(d.name)}</h3><div class="file">${esc(d.file)}</div>
+    <div class="flow"><span class="from">${d.raw.toLocaleString()}</span><span aria-hidden="true">→</span><span class="sr">to</span><span class="to">${d.clean.toLocaleString()}</span><span class="from">rows</span></div>
+    <div class="keep" role="img" aria-label="${kept.toFixed(1)}% of rows kept"><i style="width:${kept}%"></i></div>
+    <div class="chips">
+      ${removed ? `<span class="chip drop">${icon('trash')}${removed.toLocaleString()} removed</span>` : `<span class="chip">${icon('check')}0 removed</span>`}
+      ${f ? `<span class="chip flag">${icon('flag')}${f.toLocaleString()} flagged</span>` : ''}
+      <span class="chip new">+${d.cols_clean - d.cols_raw} cols</span>
+    </div></button>`;
+}).join('');
+$('#tabs').innerHTML = D.map((d, i) => `<button class="tab" role="tab" id="tab-${i}" aria-controls="panel" data-i="${i}" type="button">${esc(d.name)}</button>`).join('') + '<span id="ind" aria-hidden="true"></span>';
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-i]');
+  if (!b) return;
+  select(+b.dataset.i);
+  if (b.classList.contains('dcard')) $('#tabs').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+});
+$('#tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const n = (current + (e.key === 'ArrowRight' ? 1 : D.length - 1)) % D.length;
+  select(n); $('#tab-' + n).focus();
+});
+
+/* charts */
+function chart(c) {
+  const fmt = FMT[c.fmt] || FMT.num;
+  let body = '';
+  if (c.type === 'bars' && c.range) {
+    const max = Math.max(...c.items.map(x => x[2]));
+    body = `<ul class="bars range">${c.items.map(([l, lo, hi]) => `<li><span class="lab" title="${esc(l)}">${esc(l)}</span>
+      <span class="track"><span class="fill" style="left:${lo / max * 100}%;width:${(hi - lo) / max * 100}%"></span></span>
+      <span class="val">${lo}–${hi}</span></li>`).join('')}</ul>`;
+  } else if (c.type === 'bars') {
+    const max = Math.max(...c.items.map(x => x[1])) || 1;
+    body = `<ul class="bars">${c.items.map(([l, v]) => `<li><span class="lab" title="${esc(l)}">${esc(l)}</span>
+      <span class="track"><span class="fill ${c.tone || ''}" style="width:${v / max * 100}%"></span></span>
+      <span class="val">${fmt(v)}</span></li>`).join('')}</ul>`;
+  } else if (c.type === 'cols') {
+    const max = Math.max(...c.items.map(x => x[1])) || 1;
+    body = `<div class="cols" role="list">${c.items.map(([l, v]) => `<div class="c" role="listitem" aria-label="${esc(l)}: ${fmt(v)}"><em>${c.fmt === 'lpa' ? v.toFixed(1) : fmt(v)}</em><i style="height:${v / max * 88}%"></i></div>`).join('')}</div>
+      <div class="xl" aria-hidden="true">${c.items.map(([l]) => `<span title="${esc(l)}">${esc(l)}</span>`).join('')}</div>`;
+  } else if (c.type === 'grouped') {
+    const max = c.domain ? c.domain[1] : Math.max(...c.series.flatMap(s => s.values)) || 1;
+    body = `<div class="legend">${c.series.map(s => `<span><i style="background:var(--${s.tone === 'muted' ? 'series-b' : 'primary'})"></i>${esc(s.name)}</span>`).join('')}</div>
+      <ul class="group">${c.cats.map((cat, k) => `<li><span class="lab" style="text-transform:capitalize">${esc(cat)}</span><div class="pair">
+        ${c.series.map(s => `<div class="row"><span class="track"><span class="fill ${s.tone}" style="width:${s.values[k] / max * 100}%"></span></span><span class="val">${s.values[k] ? fmt(s.values[k]) : '–'}</span></div>`).join('')}
+      </div></li>`).join('')}</ul>`;
+  } else if (c.type === 'split') {
+    const tot = c.items.reduce((a, x) => a + x[1], 0);
+    body = `<div class="split" role="img" aria-label="${c.items.map(x => `${x[0]}: ${x[1]}`).join(', ')}">${c.items.map(([l, v, t]) => `<div class="${t}" style="width:${v / tot * 100}%">${v}</div>`).join('')}</div>
+      <div class="legend">${c.items.map(([l, v, t]) => `<span><i style="background:var(--${t === 'muted' ? 'series-b' : 'primary'})"></i>${esc(l)} · ${(v / tot * 100).toFixed(1)}%</span>`).join('')}</div>`;
+  }
+  return `<div class="card chart" data-reveal><h3>${esc(c.title)}</h3><p class="sub">${esc(c.sub || '')}</p>${body}</div>`;
+}
+
+function cell(v, cls = '') {
+  if (v === null || v === undefined || v === '') return `<td class="na">NaN</td>`;
+  if (typeof v === 'number') return `<td class="num">${Number.isInteger(v) ? v : v.toFixed(2).replace(/\.?0+$/, '')}</td>`;
+  const s = String(v);
+  return `<td class="${s.length > 40 ? 'long' : ''} ${cls}" ${s.length > 40 ? `title="${esc(s)}"` : ''}>${esc(s)}</td>`;
+}
+function exTable(ex) {
+  return `<div class="card" data-reveal><h3>${esc(ex.title)}</h3><p class="sub">${ex.rows.length} example rows</p><div class="scroll"><table class="ex">
+    <thead><tr>${ex.headers.map(h => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${ex.rows.map(r => `<tr>${r.map(v => cell(v)).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+}
+
+/* explorer */
+const PAGE = 25;
+let ts;
+function renderTable() {
+  const d = D[current], t = d.table;
+  if (!t._search) t._search = t.rows.map(r => r.join(' ').toLowerCase());
+  const q = ts.q.trim().toLowerCase();
+  let idx = [];
+  for (let i = 0; i < t.rows.length; i++) {
+    if (ts.flagged && !t.rows[i][t.flag]) continue;
+    if (q && !t._search[i].includes(q)) continue;
+    idx.push(i);
+  }
+  if (ts.sort !== null) {
+    const k = ts.sort, dir = ts.dir;
+    idx.sort((a, b) => {
+      const x = t.rows[a][k], y = t.rows[b][k];
+      if (x === null) return 1; if (y === null) return -1;
+      return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y))) * dir;
+    });
+  }
+  const pages = Math.max(1, Math.ceil(idx.length / PAGE));
+  ts.page = Math.min(ts.page, pages - 1);
+  const slice = idx.slice(ts.page * PAGE, ts.page * PAGE + PAGE);
+  $('#thead').innerHTML = `<tr>${t.cols.map((c, k) => `<th scope="col" ${ts.sort === k ? `aria-sort="${ts.dir > 0 ? 'ascending' : 'descending'}"` : ''}>
+    <button type="button" data-sort="${k}">${esc(c)}${t.new.includes(c) ? '<span class="new">new</span>' : ''}<span class="arrow" aria-hidden="true">${ts.sort === k ? (ts.dir > 0 ? '▲' : '▼') : '↕'}</span></button></th>`).join('')}</tr>`;
+  $('#tbody').innerHTML = slice.length ? slice.map(i => `<tr class="${t.rows[i][t.flag] ? 'flagged' : ''}">${t.rows[i].map(v => cell(v)).join('')}</tr>`).join('')
+    : `<tr><td class="empty" colspan="${t.cols.length}">No rows match “${esc(ts.q)}”.</td></tr>`;
+  $('#count').textContent = `${idx.length.toLocaleString()} of ${t.rows.length.toLocaleString()} rows`;
+  $('#pg').textContent = `Page ${ts.page + 1} / ${pages}`;
+  if (M) M.animate('#tbody tr', {opacity: [0, 1]}, {duration: 0.25, delay: M.stagger(0.012)});
+  $('#prev').disabled = ts.page === 0;
+  $('#next').disabled = ts.page >= pages - 1;
+}
+
+function select(i, first) {
+  panelStops.forEach(f => f && f()); panelStops = [];
+  current = i;
+  const d = D[i];
+  document.querySelectorAll('.tab').forEach((b, k) => { b.setAttribute('aria-selected', k === i); b.tabIndex = k === i ? 0 : -1; });
+  document.querySelectorAll('.dcard').forEach((b, k) => b.setAttribute('aria-current', k === i));
+  $('#panel').setAttribute('aria-labelledby', 'tab-' + i);
+  ts = {q: '', sort: null, dir: 1, page: 0, flagged: false};
+  $('#panel').innerHTML = `
+    <div class="panel-head" data-reveal><div><h2>${esc(d.name)}</h2><p>${esc(d.desc)}</p></div>
+      <a class="btn primary" href="${esc(d.file)}" download>${icon('down')}Download clean CSV</a></div>
+    <div class="kpis">${d.kpis.map(k => `<div class="kpi ${k.tone || ''}" data-reveal><span>${esc(k.label)}</span><b>${esc(k.value)}</b><small>${esc(k.hint || '')}</small></div>`).join('')}</div>
+    <div class="grid2">
+      <div class="card" data-reveal><h3>Cleaning steps</h3><p class="sub">From cleaning_log.md, in order applied</p>
+        <div class="legend"><span><i style="background:var(--primary)"></i>transform</span><span><i style="background:var(--drop)"></i>removed</span><span><i style="background:var(--accent)"></i>flagged</span><span><i style="background:var(--check)"></i>check</span></div>
+        <ol class="steps">${d.steps.map(s => `<li><span class="badge ${s.kind}" title="${s.kind}">${icon(STEP_ICON[s.kind])}</span><div><b>${esc(s.step)}</b><p>${esc(s.detail)}</p></div></li>`).join('')}</ol></div>
+      <div style="display:grid;gap:16px;align-content:start;min-width:0">${d.examples.map(exTable).join('')}</div>
+    </div>
+    <div class="charts">${d.charts.map(chart).join('')}</div>
+    <div class="card" id="explorer" style="margin-top:16px" data-reveal>
+      <h3>Browse cleaned rows</h3><p class="sub">Search any column, click a header to sort. <span class="chip new" style="padding:0 6px">new</span> = column added during cleaning. Amber edge = flagged row.</p>
+      <div class="tools">
+        <label class="search"><span class="sr">Search rows</span>${icon('search')}<input id="q" type="search" placeholder="Search ${esc(d.name)}…" autocomplete="off"></label>
+        <label class="toggle"><input type="checkbox" id="flagged">${esc(d.table.flag_label)}</label>
+        <span class="count" id="count" aria-live="polite"></span>
+      </div>
+      <div class="tablebox"><table><caption class="sr">${esc(d.name)} cleaned rows</caption><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+      <div class="pager"><span class="count" id="pg"></span><div class="btns">
+        <button class="btn" id="prev" type="button">${icon('left')}Prev</button>
+        <button class="btn" id="next" type="button">Next${icon('right')}</button></div></div>
+    </div>`;
+  let timer;
+  $('#q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { ts.q = e.target.value; ts.page = 0; renderTable(); }, 150); };
+  $('#flagged').onchange = e => { ts.flagged = e.target.checked; ts.page = 0; renderTable(); };
+  $('#prev').onclick = () => { ts.page--; renderTable(); };
+  $('#next').onclick = () => { ts.page++; renderTable(); };
+  $('#thead').onclick = e => {
+    const b = e.target.closest('[data-sort]'); if (!b) return;
+    const k = +b.dataset.sort;
+    if (ts.sort === k) { if (ts.dir === 1) ts.dir = -1; else ts.sort = null; } else { ts.sort = k; ts.dir = 1; }
+    renderTable();
+    $(`[data-sort="${k}"]`).focus();
+  };
+  renderTable();
+  moveInd(i, first);
+  if (M) {
+    const P = $('#panel');
+    reveal([P.querySelector('.panel-head'), ...P.querySelectorAll('.kpi'), ...P.querySelectorAll('.grid2 > *, .grid2 > div > .card')].filter(Boolean));
+    P.querySelectorAll('.kpi b').forEach((b, k) => countUp(b, 0.1 + k * 0.05));
+    P.querySelectorAll('.steps li').forEach(li => li.style.opacity = 0);
+    M.animate(P.querySelectorAll('.steps li'), {opacity: [0, 1], transform: ['translateX(-8px)', 'translateX(0)']}, {duration: 0.4, ease: EASE, delay: M.stagger(0.04, {startDelay: 0.2})});
+    P.querySelectorAll('.chart').forEach(c => onView(c, () => { reveal([c]); grow(c, 0.15); }));
+    onView($('#explorer'), () => reveal([$('#explorer')]), 0.05);
+  }
+}
+
+/* gallery + footer */
+if (DATA.gallery.length) {
+  $('#gallery').innerHTML = DATA.gallery.map(f => {
+    const name = f.replace(/^\d+_|\.png$/g, '').replace(/_/g, ' ');
+    return `<figure><img src="charts/${encodeURI(f)}" alt="Chart: ${esc(name)}" loading="lazy" width="1000" height="600"><figcaption>${esc(name)}</figcaption></figure>`;
+  }).join('');
+  if (M) $('#gallery').querySelectorAll('figure').forEach(f => { f.setAttribute('data-reveal', ''); M.inView(f, () => reveal([f]), {amount: 0.2}); });
+} else $('#gallery-sec').hidden = true;
+$('#foot').innerHTML = `Built ${esc(DATA.built)} from <code>clean_data.py</code> output. Rebuild: <code>python build_dashboard.py</code> inside <code>cleaned/</code>.`;
+select(0, true);
+
+/* intro + scroll-linked progress */
+if (M) {
+  reveal([...document.querySelectorAll('.hero [data-reveal]')]);
+  document.querySelectorAll('.total b').forEach((b, k) => countUp(b, 0.25 + k * 0.06));
+  M.inView('#cards', () => { reveal([...document.querySelectorAll('.dcard')]); grow($('#cards'), 0.3); }, {amount: 0.2});
+  M.scroll(M.animate('#progress', {transform: ['scaleX(0)', 'scaleX(1)']}, {ease: 'linear'}));
+  addEventListener('resize', () => moveInd(current, true));
+  document.fonts && document.fonts.ready.then(() => moveInd(current, true));
+}
+</script>
+</body>
+</html>

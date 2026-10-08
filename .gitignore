@@ -1,0 +1,13 @@
+# Whitelist: only raw data, code and cleaned output are tracked.
+/*
+!/.gitignore
+!/README.md
+!/clean_data.py
+!/cleaned/
+!/source_code/
+!/Grayhat/
+/Grayhat/*
+!/Grayhat/SAS Data Problem Statement and Instructions Hackathon/
+/Grayhat/SAS Data Problem Statement and Instructions Hackathon/Problem Context Brief*.pdf
+__pycache__/
+*.pyc
